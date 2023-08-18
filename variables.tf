@@ -5,11 +5,6 @@ variable "region" {
 }
 
 
-variable "image_id" {
-  type    = string
-  default = "ami-02bfb7ab7fbe1bd32"
-}
-
 variable "instance_type" {
   type    = string
   default = "t2.micro"
@@ -22,28 +17,24 @@ variable "keyname" {
 }
 
 //"terraform"
-variable "webservertags" {
-  type = map(any)
-  default = {
-    Name = "Web Server",
-    Env  = "Development"
-  }
+variable "Tag_name" {
+  default = "Web Server"
 }
 
-variable "ssh_port" {
-  type    = string
-  default = "22"
+variable "Tag_env" {
+  default = "Development"
 }
 
-variable "http_port" {
-  type    = string
-  default = "80"
+variable "ports" {
+  type = list
+  default = [22,80,443]
+  
 }
 
 output "webserver_public_ip" {
-  value = aws_instance.web-server.public_ip
+  value = aws_instance.web-server[0].public_ip
 }
 
 output "webserver_public_dns" {
-  value = aws_instance.web-server.public_dns
+  value = aws_instance.web-server[0].public_dns
 }

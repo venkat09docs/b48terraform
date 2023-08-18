@@ -4,20 +4,15 @@ resource "aws_security_group" "webserver_sg" {
   description = "Allow SSH and HTTP ports"
   //vpc_id      = aws_vpc.main.id
 
-  ingress {
-    description = "SSH Protocol"
-    from_port   = var.ssh_port
-    to_port     = var.ssh_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "Http Protocol"
-    from_port   = var.http_port
-    to_port     = var.http_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "ingress" {
+    iterator = port
+    for_each = var.ports
+    content {
+      from_port   = port.value
+      to_port     = port.value
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
   }
 
   egress {
@@ -32,12 +27,36 @@ resource "aws_security_group" "webserver_sg" {
   }
 }
 
+data "aws_ami" "amazon_linux_ami" {
+  most_recent      = true
+  owners           = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
 resource "aws_instance" "web-server" {
-  ami                    = var.image_id
+  count = 10
+  ami                    = data.aws_ami.amazon_linux_ami.id
   instance_type          = var.instance_type
   key_name               = var.keyname
   vpc_security_group_ids = [aws_security_group.webserver_sg.id]
   user_data = file("httpserver.sh")
 
-  tags = var.webservertags
+  tags = {
+    Name = "${var.Tag_name}-${count.index + 1}",
+    Env  = var.Tag_env
+  }
 }
