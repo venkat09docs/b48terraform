@@ -3,4 +3,4 @@ yum update -y
 yum install httpd -y
 systemctl start httpd
 systemctl enable httpd
-echo "Welcome Http Server" >> /var/www/html/index.html
+# echo "Welcome to Terraform V1" >> /var/www/html/index.html

@@ -48,7 +48,7 @@ data "aws_ami" "amazon_linux_ami" {
 }
 
 resource "aws_instance" "web-server" {
-  count = 10
+  count = 1
   ami                    = data.aws_ami.amazon_linux_ami.id
   instance_type          = var.instance_type
   key_name               = var.keyname
@@ -59,4 +59,38 @@ resource "aws_instance" "web-server" {
     Name = "${var.Tag_name}-${count.index + 1}",
     Env  = var.Tag_env
   }
+}
+
+
+resource "null_resource" "provisioner" {
+
+  depends_on = [ 
+    aws_instance.web-server[0]
+  ]
+
+  provisioner "local-exec" {
+    command = "echo Welcome to Terraform V1 > files/index.html"
+  }
+
+  connection {
+    type     = "ssh"
+    user     = "ec2-user"
+    private_key = file("./terraform.pem")
+    host     = aws_instance.web-server[0].public_ip
+  }
+
+  provisioner "file" {
+    source      = "./files/"
+    destination = "/tmp/"
+  }
+
+  #sudo cp /tmp/index.html /var/www/html/
+
+   provisioner "remote-exec" {
+    inline = [
+      "sleep 60",
+      "sudo cp /tmp/index.html /var/www/html/",      
+    ]
+  }
+
 }
